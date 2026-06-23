@@ -12,7 +12,7 @@ Hooks=tools
  * Date: June 23Th, 2026
  * 
  * @package visitor_stats
- * @version 1.0.27
+ * @version 1.0.28
  * @author webitproff
  * @copyright Copyright (c) webitproff 2026 | https://github.com/webitproff/visitor-stats-crawler-cotonti
  * @license BSD
@@ -22,7 +22,6 @@ Hooks=tools
 
 list(Cot::$usr['auth_read'], Cot::$usr['auth_write'], Cot::$usr['isadmin']) = cot_auth('plug', 'visitor_stats');
 cot_block(Cot::$usr['auth_read']);
-
 
 require_once cot_incfile('visitor_stats', 'plug');
 
@@ -40,15 +39,20 @@ if ($clear && Cot::$usr['isadmin']) {
 }
 
 // Параметры
-$days      = cot_import('days', 'G', 'INT', 0);
+$days          = cot_import('days', 'G', 'INT', 0);
 if ($days < 1) {
-    $days = 30;                 // значение по умолчанию, если не задано или 0
+    $days = 30;
 }
-$only_bots = cot_import('only_bots', 'G', 'INT', 0);
-$page      = cot_import('page', 'G', 'INT', 1);
+$only_bots     = cot_import('only_bots', 'G', 'INT', 0);
+$show_blocked  = cot_import('show_blocked', 'G', 'INT', 0);
+$filter_referer = cot_import('referer', 'G', 'TXT', '');
+$page          = cot_import('page', 'G', 'INT', 1);
 if ($page < 1) $page = 1;
 $limit  = 50;
 $offset = ($page - 1) * $limit;
+
+// Явно приводим к строке для безопасности
+$filter_referer = (string) $filter_referer;
 
 $t_vis = Cot::$db->quoteTableName(Cot::$db->visitor_stats);
 
@@ -57,12 +61,20 @@ $total_human = Cot::$db->query("SELECT COUNT(*) FROM $t_vis WHERE vs_crawler_nam
 $total_bot   = Cot::$db->query("SELECT COUNT(*) FROM $t_vis WHERE vs_crawler_name IS NOT NULL")->fetchColumn();
 $total_visits = $total_human + $total_bot;
 $unique_visitors = Cot::$db->query("SELECT COUNT(DISTINCT vs_ip) FROM $t_vis")->fetchColumn();
+$total_blocked   = Cot::$db->query("SELECT COUNT(*) FROM $t_vis WHERE vs_blocked = 1")->fetchColumn();
 
 // --- Детальный лог ---
 $condition = '1=1';
 $params = [];
 if ($only_bots) {
     $condition .= ' AND vs_crawler_name IS NOT NULL';
+}
+if ($show_blocked) {
+    $condition .= ' AND vs_blocked = 1';
+}
+if (!empty($filter_referer)) {
+    $condition .= ' AND vs_referer LIKE ?';
+    $params[] = '%' . $filter_referer . '%';
 }
 
 $total_items = Cot::$db->query("SELECT COUNT(*) FROM $t_vis WHERE $condition", $params)->fetchColumn();
@@ -79,15 +91,18 @@ $log_entries = Cot::$db->query(
 
 // Передача значений в шаблон
 $tt->assign([
-    'VAL_TOTAL'       => $total_visits,
-    'VAL_HUMAN'       => $total_human,
-    'VAL_BOT'         => $total_bot,
-    'VAL_UNIQUE'      => $unique_visitors,
-    'VAL_DAYS'        => $days,
-    'VAL_ONLY_BOTS'   => $only_bots,
-    'VAL_PAGE'        => $page,
-    'VAL_TOTAL_PAGES' => $total_pages,
-    'VAL_TOTAL_ITEMS' => $total_items,
+    'VAL_TOTAL'         => $total_visits,
+    'VAL_HUMAN'         => $total_human,
+    'VAL_BOT'           => $total_bot,
+    'VAL_UNIQUE'        => $unique_visitors,
+    'VAL_TOTAL_BLOCKED' => $total_blocked,
+    'VAL_DAYS'          => $days,
+    'VAL_ONLY_BOTS'     => $only_bots,
+    'VAL_SHOW_BLOCKED'  => $show_blocked,
+    'VAL_FILTER_REFERER'=> htmlspecialchars($filter_referer),
+    'VAL_PAGE'          => $page,
+    'VAL_TOTAL_PAGES'   => $total_pages,
+    'VAL_TOTAL_ITEMS'   => $total_items,
 ]);
 
 $ii = 0;
@@ -108,7 +123,8 @@ foreach ($log_entries as $row) {
         'LOG_PAGE'         => htmlspecialchars($row['vs_page']),
         'LOG_REFERER'      => htmlspecialchars($row['vs_referer'] ?? ''),
         'LOG_ODDEVEN'      => cot_build_oddeven($ii),
-		'LOG_BLOCKED' => $row['vs_blocked'] ? Cot::$L['visitor_stats_blocked_yes'] : Cot::$L['visitor_stats_blocked_no'],
+        'LOG_BLOCKED'      => $row['vs_blocked'] ? Cot::$L['visitor_stats_blocked_yes'] : Cot::$L['visitor_stats_blocked_no'],
+		'LOG_BLOCKED_CLASS' => $row['vs_blocked'] ? 'table-danger' : 'table-success',
     ]);
     $tt->parse('MAIN.LOG_ROW');
     $ii++;
@@ -118,7 +134,7 @@ foreach ($log_entries as $row) {
 if ($total_pages > 1) {
     $pagination = cot_pagenav(
         'admin',
-        'm=other&p=visitor_stats&days=' . $days . '&only_bots=' . $only_bots,
+        'm=other&p=visitor_stats&days=' . $days . '&only_bots=' . $only_bots . '&show_blocked=' . $show_blocked . '&referer=' . urlencode($filter_referer),
         $offset,
         $total_items,
         $limit,
