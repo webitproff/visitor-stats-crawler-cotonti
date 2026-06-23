@@ -293,7 +293,7 @@ They are defined in `visitor_stats.functions.php` and can be used after the plug
 ### Managing the Bot Whitelist
 
 - **Adding a bot:** open the file `lib/Fixtures/WhitelistBots.php` and add a line with a substring of the bot's name to the `getAllowed()` array.  
-  For example, for DeepSeekBot: `'DeepSeekBot',`.
+  For example, for GrokBot: `'GrokBot',`.
 - **Debugging:** to check which bots are blocked or allowed, temporarily enable debugging (`$debug = true`) in `visitor_stats.global.php` and analyze the `debug_bot.log` file. Remember to disable debugging after verification.
 
 ---
@@ -618,7 +618,7 @@ plugins/visitor_stats/
 ### Управление белым списком ботов
 
 - **Добавление бота:** откройте файл `lib/Fixtures/WhitelistBots.php` и добавьте строку с частью имени бота в массив `getAllowed()`.  
-  Например, для DeepSeekBot: `'DeepSeekBot',`.
+  Например, для GrokBot: `'GrokBot',`.
 - **Отладка:** для проверки, какие боты блокируются или пропускаются, временно включите отладку (`$debug = true`) в `visitor_stats.global.php` и анализируйте лог `debug_bot.log`. Не забудьте отключить отладку после проверки.
 
 ---
