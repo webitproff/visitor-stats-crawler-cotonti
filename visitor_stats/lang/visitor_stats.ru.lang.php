@@ -2,11 +2,28 @@
 /**
  * Russian language file for Visitor Statistics plugin
  * File: plugins/visitor_stats/lang/visitor_stats.ru.lang.php
- * @package VisitorStats
- * @copyright (c) Cotonti Team
- * @license https://github.com/Cotonti/Cotonti/blob/master/License.txt
+ * 
+ * Date: June 23Th, 2026
+ * 
+ * @package visitor_stats
+ * @version 1.0.27
+ * @author webitproff
+ * @copyright Copyright (c) webitproff 2026 | https://github.com/webitproff/visitor-stats-crawler-cotonti
+ * @license BSD
  */
+/**
+ * Plugin Info
+ */
+$L['info_name'] = 'Статистика посещений ботов и не только';
 
+$L['info_desc'] = 'Детальный учёт посещений сайта с расширенной аналитикой по каждому визиту и определением поисковых роботов, краулеров и пауков';
+
+$L['info_notes'] = 
+    'Новичкам ' .
+    '<a href="https://github.com/webitproff/visitor-stats-crawler-cotonti/blob/main/README.md" target="_blank">' .
+    '<abbr title="Введение. Описание и принципы работы плагина" class="initialism">' .
+    '<strong>README.md</strong></abbr></a>.';
+	
 $L['visitor_stats'] = 'Статистика посещений';
 $L['visitor_stats_desc'] = 'Продвинутая статистика посетителей с детектированием ботов';
 $L['visitor_stats_total_visits'] = 'Всего посещений';
@@ -25,6 +42,9 @@ $L['visitor_stats_device_type'] = 'Тип';
 $L['visitor_stats_device_model'] = 'Модель';
 $L['visitor_stats_isp'] = 'Провайдер';
 $L['visitor_stats_vpn'] = 'VPN';
+$L['visitor_stats_blocked'] = 'Заблокирован';
+$L['visitor_stats_blocked_yes'] = 'Да';
+$L['visitor_stats_blocked_no'] = 'Нет';
 $L['visitor_stats_bot_label'] = 'Бот';
 $L['visitor_stats_unique_label'] = 'Уник.';
 $L['visitor_stats_crawler'] = 'Краулер';
