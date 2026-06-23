@@ -1,4 +1,5 @@
--- /plugins/visitor_stats/setup/visitor_stats.install.sql
+-- plugins/visitor_stats/setup/visitor_stats.install.sql
+-- June 23Th, 2026 version 1.0.27
 -- Visitor Statistics Tables
 -- Main visitor tracking table
 CREATE TABLE IF NOT EXISTS `cot_visitor_stats` (
@@ -19,6 +20,7 @@ CREATE TABLE IF NOT EXISTS `cot_visitor_stats` (
   `vs_is_vpn` TINYINT(1) DEFAULT 0,
   `vs_is_bot` TINYINT(1) DEFAULT 0,
   `vs_unique` TINYINT(1) DEFAULT 1,
+  `vs_blocked` TINYINT(1) DEFAULT 0,
   PRIMARY KEY (`vs_id`),
   KEY `vs_date` (`vs_date`),
   KEY `vs_ip` (`vs_ip`),
