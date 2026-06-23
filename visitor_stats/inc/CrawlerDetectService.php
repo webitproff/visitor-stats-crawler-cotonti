@@ -3,9 +3,14 @@
  * Crawler Detection Service
  * Wrapper around Crawler-Detect library
  * File: plugins/visitor_stats/inc/CrawlerDetectService.php
- * @package VisitorStats
- * @copyright (c) Cotonti Team
- * @license https://github.com/Cotonti/Cotonti/blob/master/License.txt
+ * 
+ * Date: June 23Th, 2026
+ * 
+ * @package visitor_stats
+ * @version 1.0.27
+ * @author webitproff
+ * @copyright Copyright (c) webitproff 2026 | https://github.com/webitproff/visitor-stats-crawler-cotonti
+ * @license BSD
  */
 
 defined('COT_CODE') or die('Wrong URL');
