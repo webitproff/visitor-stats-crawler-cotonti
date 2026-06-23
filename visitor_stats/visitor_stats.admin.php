@@ -8,9 +8,14 @@ Hooks=tools
 /**
  * Administration panel - Visitor Statistics
  * File: plugins/visitor_stats/visitor_stats.admin.php
- * @package VisitorStats
- * @copyright (c) Cotonti Team
- * @license https://github.com/Cotonti/Cotonti/blob/master/License.txt
+ * 
+ * Date: June 23Th, 2026
+ * 
+ * @package visitor_stats
+ * @version 1.0.27
+ * @author webitproff
+ * @copyright Copyright (c) webitproff 2026 | https://github.com/webitproff/visitor-stats-crawler-cotonti
+ * @license BSD
  */
 
 (defined('COT_CODE') && defined('COT_ADMIN')) or die('Wrong URL.');
@@ -103,6 +108,7 @@ foreach ($log_entries as $row) {
         'LOG_PAGE'         => htmlspecialchars($row['vs_page']),
         'LOG_REFERER'      => htmlspecialchars($row['vs_referer'] ?? ''),
         'LOG_ODDEVEN'      => cot_build_oddeven($ii),
+		'LOG_BLOCKED' => $row['vs_blocked'] ? Cot::$L['visitor_stats_blocked_yes'] : Cot::$L['visitor_stats_blocked_no'],
     ]);
     $tt->parse('MAIN.LOG_ROW');
     $ii++;
