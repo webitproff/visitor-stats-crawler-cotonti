@@ -5,7 +5,7 @@ Code=visitor_stats
 Name=Visitor Statistics with Crawler Detection
 Category=stats
 Description=Advanced visitor statistics with crawler/bot detection
-Version=1.0.27
+Version=1.0.28
 Date=June 23Th, 2026
 Author=webitproff
 Copyright=(c) webitproff 2026 https://github.com/webitproff/visitor-stats-crawler-cotonti
@@ -23,7 +23,7 @@ defined('COT_CODE') or die('Wrong URL');
 /**
  * visitor_stats.setup.php - Register data in $db_core and $db_config. Setup & Config File for the Plugin visitor_stats
  *
- * visitor_stats plugin for Cotonti 0.9.26, PHP 8.4+
+ * visitor_stats plugin for Cotonti v.1.0+, PHP 8.4+
  * Filename: visitor_stats.setup.php
  *
  * ReadMeMore:       https://github.com/webitproff/visitor-stats-crawler-cotonti/blob/main/README.md 
@@ -31,7 +31,7 @@ defined('COT_CODE') or die('Wrong URL');
  *
  * Date: June 23Th, 2026
  * @package visitor_stats
- * @version 1.0.27
+ * @version 1.0.28
  * @author webitproff
  * @copyright Copyright (c) webitproff 2026 | https://github.com/webitproff/visitor-stats-crawler-cotonti
  * @license BSD
