@@ -1,20 +1,26 @@
 <?php
 /**
  * Visitor Statistics Functions
- * /plugins/visitor_stats/inc/visitor_stats.functions.php
- * @package VisitorStats
- * @copyright (c) Cotonti Team
- * @license https://github.com/Cotonti/Cotonti/blob/master/License.txt
+ * plugins/visitor_stats/inc/visitor_stats.functions.php
+ * 
+ * Date: June 23Th, 2026
+ * 
+ * @package visitor_stats
+ * @version 1.0.27
+ * @author webitproff
+ * @copyright Copyright (c) webitproff 2026 | https://github.com/webitproff/visitor-stats-crawler-cotonti
+ * @license BSD
  */
 
 defined('COT_CODE') or die('Wrong URL');
 
 // ========== Обязательные подключения и регистрация таблиц ==========
-require_once cot_langfile('visitor_stats', 'plug');
+require_once cot_langfile('visitor_stats', 'plug'); // файлы локализации
 require_once __DIR__ . '/CrawlerDetectService.php';
 require_once __DIR__ . '/VisitorStatsRepository.php';
 require_once __DIR__ . '/VisitorStatsService.php';
 require_once __DIR__ . '/../lib/Fixtures/WhitelistBots.php';
+
 Cot::$db->registerTable('visitor_stats');
 Cot::$db->registerTable('visitor_stats_daily');
 Cot::$db->registerTable('visitor_stats_crawlers');
