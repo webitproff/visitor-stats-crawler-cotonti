@@ -4,6 +4,8 @@
 A plugin for Cotonti CMF that provides detailed tracking of site visits with extended analytics for each visit, and detection of search robots, crawlers, and spiders.  
 Data is stored in the database and is available for viewing in the administration panel.
 
+<img width="1168" height="784" alt="att_1184" src="https://github.com/user-attachments/assets/e2cbae5f-54b1-4c0c-ab05-d83d72451389" />
+
 ## Key Features
 
 ### 📊 Collection and Storage of Detailed Visit Information
