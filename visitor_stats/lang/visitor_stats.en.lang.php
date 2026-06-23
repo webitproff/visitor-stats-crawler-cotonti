@@ -2,11 +2,27 @@
 /**
  * English language file for Visitor Statistics plugin
  * File: plugins/visitor_stats/lang/visitor_stats.en.lang.php
- * @package VisitorStats
- * @copyright (c) Cotonti Team
- * @license https://github.com/Cotonti/Cotonti/blob/master/License.txt
+ * Date: June 23Th, 2026
+ * 
+ * @package visitor_stats
+ * @version 1.0.27
+ * @author webitproff
+ * @copyright Copyright (c) webitproff 2026 | https://github.com/webitproff/visitor-stats-crawler-cotonti
+ * @license BSD
  */
+/**
+ * Plugin Info
+ */
+$L['info_name'] = 'Visitor Statistics with Bot Detection';
 
+$L['info_desc'] = 'Detailed tracking of website visits with extended analytics for each visit and detection of search robots, crawlers, and spiders';
+
+$L['info_notes'] = 
+    'New to the plugin? Read the ' .
+    '<a href="https://github.com/webitproff/visitor-stats-crawler-cotonti/blob/main/README.md" target="_blank">' .
+    '<abbr title="Introduction. Description and operation principles of the plugin" class="initialism">' .
+    '<strong>README.md</strong></abbr></a>.';
+	
 $L['visitor_stats'] = 'Visitor Statistics';
 $L['visitor_stats_desc'] = 'Advanced visitor statistics with bot detection';
 $L['visitor_stats_total_visits'] = 'Total visits';
@@ -25,6 +41,9 @@ $L['visitor_stats_device_type'] = 'Type';
 $L['visitor_stats_device_model'] = 'Model';
 $L['visitor_stats_isp'] = 'ISP';
 $L['visitor_stats_vpn'] = 'VPN';
+$L['visitor_stats_blocked'] = 'Blocked';
+$L['visitor_stats_blocked_yes'] = 'Yes';
+$L['visitor_stats_blocked_no'] = 'No';
 $L['visitor_stats_bot_label'] = 'Bot';
 $L['visitor_stats_unique_label'] = 'Uniq.';
 $L['visitor_stats_crawler'] = 'Crawler';
