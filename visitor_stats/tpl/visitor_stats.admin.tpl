@@ -10,7 +10,7 @@
 </div>
 
 <!-- Карточки статистики -->
-<div class="row row-cols-1 row-cols-md-4 g-3 mb-4">
+<div class="row row-cols-1 row-cols-md-5 g-3 mb-4">
     <div class="col">
         <div class="card text-center">
             <div class="card-header">{PHP.L.visitor_stats_total_visits}</div>
@@ -35,13 +35,19 @@
             <div class="card-body display-6 text-primary">{VAL_UNIQUE}</div>
 		</div>
 	</div>
+    <div class="col">
+        <div class="card text-center">
+            <div class="card-header">{PHP.L.visitor_stats_blocked_visitors}</div>
+            <div class="card-body display-6 text-danger">{VAL_TOTAL_BLOCKED}</div>
+		</div>
+	</div>
 </div>
+
 
 <!-- Фильтр -->
 <div class="card mb-4">
     <div class="card-body">
         <form method="get" action="{PHP|cot_url('admin', 'm=other&p=visitor_stats')}" class="row g-2 align-items-center">
-            <!-- Скрытые поля, чтобы не потерять p=visitor_stats -->
             <input type="hidden" name="m" value="other">
             <input type="hidden" name="p" value="visitor_stats">
             <div class="col-auto">
@@ -56,7 +62,19 @@
 				</div>
 			</div>
             <div class="col-auto">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="show_blocked" value="1" 
+					<!-- IF {VAL_SHOW_BLOCKED} -->checked<!-- ENDIF -->>
+                    <label class="form-check-label">{PHP.L.visitor_stats_show_blocked}</label>
+				</div>
+			</div>
+            <div class="col-auto">
+                <label class="form-label me-1">{PHP.L.visitor_stats_filter_referer}:</label>
+                <input type="text" name="referer" value="{VAL_FILTER_REFERER}" placeholder="google.com" class="form-control">
+			</div>
+            <div class="col-auto">
                 <button type="submit" class="btn btn-primary btn-sm">{PHP.L.Apply}</button>
+                <a href="{PHP|cot_url('admin', 'm=other&p=visitor_stats')}" class="btn btn-secondary btn-sm ms-1">{PHP.L.visitor_stats_reset_filter}</a>
 			</div>
 		</form>
 	</div>
@@ -78,7 +96,7 @@
                     <th>{PHP.L.visitor_stats_device_model}</th>
                     <th>{PHP.L.visitor_stats_isp}</th>
                     <th>{PHP.L.visitor_stats_vpn}</th>
-					<th>{PHP.L.visitor_stats_blocked}</th>
+                    <th>{PHP.L.visitor_stats_blocked}</th>
                     <th>{PHP.L.visitor_stats_bot_label}</th>
                     <th>{PHP.L.visitor_stats_unique_label}</th>
                     <th>{PHP.L.visitor_stats_crawler}</th>
@@ -98,7 +116,7 @@
                     <td>{LOG_DEVICE_MODEL}</td>
                     <td>{LOG_ISP}</td>
                     <td>{LOG_IS_VPN}</td>
-					<td>{LOG_BLOCKED}</td>
+                    <td class="{LOG_BLOCKED_CLASS}">{LOG_BLOCKED}</td>
                     <td>{LOG_IS_BOT}</td>
                     <td>{LOG_UNIQUE}</td>
                     <td>{LOG_CRAWLER}</td>
@@ -110,12 +128,14 @@
 		</table>
 	</div>
 </div>
+
+<!-- Пагинация -->
 <!-- IF {PAGINATION} -->
-<nav aria-label="my pagination">
-	<ul class="pagination justify-content-center mt-5">
-		{PREVIOUS_PAGE}
-		{PAGINATION}
-		{NEXT_PAGE}
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center mt-5">
+        {PREVIOUS_PAGE}
+        {PAGINATION}
+        {NEXT_PAGE}
 	</ul>
 </nav>
 <!-- ENDIF -->
