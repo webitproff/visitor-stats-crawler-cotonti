@@ -226,7 +226,72 @@ Anywhere in Cotonti (templates, other plugins), the following functions are avai
 
 They are defined in `visitor_stats.functions.php` and can be used after the plugin is activated.
 
----
+___
+
+## 🛡️ Bot Whitelist and Early Blocking of Unwanted Crawlers
+
+### Why is this needed?
+
+The plugin not only collects bot statistics but can also **selectively block** those that do not provide value to your site.  
+This allows you to:
+
+- Reduce server load by filtering out useless or malicious bots before the main Cotonti code runs.
+- Only allow search robots and services that actually help with promotion (Google, Yandex, Bing, Facebook, PageSpeed Insights, Ahrefs, etc.).
+- Protect content from scraping by unwanted crawlers.
+
+### How it works
+
+1. **Whitelist** (`lib/Fixtures/WhitelistBots.php`)  
+   Contains an array of bot names that are allowed access. Matching is performed by **case‑insensitive substring search**.  
+   If the detected bot name contains any string from the whitelist, it is allowed through.  
+   The administrator can easily edit this file to add or remove bots as needed.
+
+2. **Hook `header.first`** (`visitor_stats.header.first.php`)  
+   Executes at the earliest stage of request processing, before any data is loaded.  
+   - Determines whether the visitor is a bot using `CrawlerDetectService`.
+   - If a bot is detected, calls the `isAllowedBot()` function, which checks the bot name against the whitelist.
+   - If the bot is **not allowed**:
+     - The script immediately returns an HTTP **403 Forbidden** response.
+     - The response body contains the plain text `Access denied for this bot.`
+     - Further Cotonti execution is stopped (`exit`), conserving resources.
+
+3. **Function `isAllowedBot()`** (in `inc/visitor_stats.functions.php`)  
+   - Always allows humans (`null` or empty bot name).
+   - Blocks “suspicious” UAs marked as `Suspicious UA` (old Android versions, emulation of outdated devices).
+   - Compares the bot name against the whitelist using `stripos()`.
+
+4. **Debug mode**  
+   The `visitor_stats.header.first.php` file contains a `$debug` flag.  
+   When set to `true`, the plugin writes every trigger event to `debug_bot.log`: timestamp, User‑Agent, bot name, and the decision (ALLOWED/BLOCKED).  
+   This helps track which bots are trying to access the site and whether any desired bots are being blocked.
+
+### How to add a new bot to the whitelist
+
+1. Open the file `plugins/visitor_stats/lib/Fixtures/WhitelistBots.php`.
+2. Add a new line to the `getAllowed()` array with a substring of the bot’s name, e.g.:
+   ```
+   'yourNameBot',
+   ```
+3. Save the file.
+
+Changes take effect immediately (on the next request).
+
+### Recommendations for configuring the whitelist
+
+- Keep only bots that provide real value:
+  - Search engines (Google, Bing, Yandex, Seznam, Baidu, Sogou, etc.).
+  - Performance analyzers (Lighthouse, PageSpeed Insights).
+  - Webmaster services (Google Inspection Tool, Facebook External Hit).
+  - Popular SEO tools (Ahrefs, Semrush, DotBot), if you are fine with their crawling.
+  - Useful AI crawlers (GPTBot, ChatGPT‑User, Claude‑Web), if you want your content to be used for model training or to appear in AI‑powered search results.
+- All other bots will be automatically blocked by the plugin, reducing parasitic traffic.
+
+### Verifying the setup
+
+After adding new rules, you can enable debug mode (`$debug = true`) and check the `debug_bot.log` file to ensure that desired bots are allowed and unwanted ones are blocked.  
+Remember to turn off debug mode once verification is complete to prevent the log from growing indefinitely.
+
+___
 
 ## Technical Details
 
@@ -487,8 +552,72 @@ plugins/visitor_stats/
 
 Они определены в `visitor_stats.functions.php` и могут использоваться после активации плагина.
 
----
+___
 
+## 🛡️ Белый список ботов и ранняя блокировка нежелательных краулеров
+
+### Зачем это нужно
+
+Плагин не только собирает статистику по ботам, но и умеет **избирательно блокировать** тех из них, которые не представляют ценности для вашего сайта.  
+Это позволяет:
+
+- Снизить нагрузку на сервер, отсекая бесполезных или вредоносных ботов до выполнения основного кода Cotonti.
+- Пропускать только тех поисковых роботов и сервисы, которые реально помогают продвижению (Google, Яндекс, Bing, Facebook, PageSpeed Insights, Ahrefs и т.п.).
+- Защитить контент от парсинга нежелательными краулерами.
+
+### Как это работает
+
+1. **Белый список** (`lib/Fixtures/WhitelistBots.php`)  
+   Содержит массив имён ботов, которым разрешён доступ. Проверка идёт по **частичному совпадению без учёта регистра**.  
+   Если имя обнаруженного бота содержит любую из строк белого списка — он пропускается.  
+   Администратор может легко редактировать этот файл, добавляя или удаляя нужных ботов.
+
+2. **Хук `header.first`** (`visitor_stats.header.first.php`)  
+   Выполняется на самом раннем этапе обработки запроса, до загрузки каких‑либо данных.  
+   - Определяет, является ли посетитель ботом, с помощью `CrawlerDetectService`.
+   - Если бот обнаружен, вызывает функцию `isAllowedBot()`, которая сверяет имя бота с белым списком.
+   - Если бот **не разрешён**:
+     - Скрипт немедленно отдаёт HTTP‑ответ **403 Forbidden**.
+     - Тело ответа содержит простой текст `Access denied for this bot.`
+     - Дальнейшее выполнение Cotonti прекращается (вызов `exit`), что экономит ресурсы.
+
+3. **Функция `isAllowedBot()`** (в `inc/visitor_stats.functions.php`)  
+   - Всегда разрешает людей (`null` или пустое имя бота).
+   - Блокирует «подозрительные» UA, помеченные как `Suspicious UA` (старые Android, эмуляция устаревших устройств).
+   - Сравнивает имя бота с белым списком через `stripos()`.
+
+4. **Отладочный режим**  
+   В файле `visitor_stats.header.first.php` есть флаг `$debug`.  
+   Если установить его в `true`, плагин будет записывать в лог `debug_bot.log` каждое срабатывание: время, User‑Agent, имя бота и решение (ALLOWED/BLOCKED).  
+   Это помогает отследить, какие боты пытаются заходить и не блокируется ли кто‑то нужный.
+
+### Как добавить нового бота в белый список
+
+1. Откройте файл `plugins/visitor_stats/lib/Fixtures/WhitelistBots.php`.
+2. В массиве `getAllowed()` добавьте новую строку с частью имени бота, например:
+   ```
+   'yourNameBot',
+   ```
+3. Сохраните файл.
+
+Изменения вступают в силу немедленно (при следующем запросе).
+
+### Рекомендации по настройке белого списка
+
+- Оставляйте в списке только тех ботов, которые приносят реальную пользу:
+  - Поисковые системы (Google, Bing, Яндекс, Seznam, Baidu, Sogou и др.).
+  - Анализаторы скорости (Lighthouse, PageSpeed Insights).
+  - Сервисы для вебмастеров (Google Inspection Tool, Facebook External Hit).
+  - Популярные SEO‑инструменты (Ahrefs, Semrush, DotBot), если вы не против их сканирования.
+  - Полезные AI‑краулеры (GPTBot, ChatGPT‑User, Claude‑Web), если вы хотите, чтобы ваш контент использовался для обучения моделей или появлялся в результатах AI‑поиска.
+- Всех остальных ботов плагин будет автоматически блокировать, снижая паразитный трафик.
+
+### Проверка работы
+
+После добавления новых правил можно включить отладку (`$debug = true`) и проанализировать лог `debug_bot.log`, чтобы убедиться, что нужные боты пропускаются, а нежелательные блокируются.  
+Не забудьте выключить отладку после проверки, чтобы лог не разрастался.
+
+___
 ## Технические детали
 
 - **Требования:** Cotonti ≥ 1.0 (с поддержкой PHP 8.x), PHP 8.0+, MySQL 5.7+ (или MariaDB).
@@ -510,6 +639,7 @@ plugins/visitor_stats/
 - Интеграция с Cotonti API для получения статистики через REST.
 
 ---
+
 
 ## Лицензия
 
