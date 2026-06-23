@@ -3,16 +3,24 @@
  * Visitor Statistics Service
  * Main business logic
  * File: plugins/visitor_stats/inc/VisitorStatsService.php
- * @package VisitorStats
- * @copyright (c) Cotonti Team
- * @license https://github.com/Cotonti/Cotonti/blob/master/License.txt
+ * 
+ * Date: June 23Th, 2026
+ * 
+ * @package visitor_stats
+ * @version 1.0.27
+ * @author webitproff
+ * @copyright Copyright (c) webitproff 2026 | https://github.com/webitproff/visitor-stats-crawler-cotonti
+ * @license BSD
  */
+
 
 defined('COT_CODE') or die('Wrong URL');
 
 class VisitorStatsService
 {
     private static $instance = null;
+    private static $visitRecorded = false;
+
     private $crawlerDetect;
     private $repository;
 
@@ -32,23 +40,40 @@ class VisitorStatsService
 
     /**
      * Record a visit
+     *
+     * @param string|null $ua User-Agent (null = брать из $_SERVER)
+     * @param string|null $preDetectedCrawlerName Имя краулера, если уже определено
+     * @param bool $blocked Является ли визит заблокированным
      */
-    public function recordVisit()
+    public function recordVisit($ua = null, $preDetectedCrawlerName = null, $blocked = false)
     {
-        // Актуальный User-Agent из заголовков
-        $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        // Предотвращаем повторную запись в рамках одного запроса
+        if (self::$visitRecorded) {
+            return;
+        }
+        self::$visitRecorded = true;
 
-        // Проверка краулера с передачей user-agent
-        $is_crawler = $this->crawlerDetect->isCrawler($ua);
-        $crawler_name = $is_crawler ? $this->crawlerDetect->getCrawlerName($ua) : null;
-
-        // Дополнительная эвристика: подозрительно старые устройства/ОС
-        if (!$is_crawler && $this->isSuspiciousUA($ua)) {
-            $is_crawler = true;
-            $crawler_name = 'Suspicious UA';
+        if ($ua === null) {
+            $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
         }
 
-        // Дополнительные данные
+        // Если краулер уже определён (например, в header.first), используем готовое имя
+        if ($preDetectedCrawlerName !== null) {
+            $is_crawler = true;
+            $crawler_name = $preDetectedCrawlerName;
+        } else {
+            // Обычная проверка
+            $is_crawler = $this->crawlerDetect->isCrawler($ua);
+            $crawler_name = $is_crawler ? $this->crawlerDetect->getCrawlerName($ua) : null;
+
+            // Эвристика подозрительных UA
+            if (!$is_crawler && $this->isSuspiciousUA($ua)) {
+                $is_crawler = true;
+                $crawler_name = 'Suspicious UA';
+            }
+        }
+
+        // Собираем все данные полностью, независимо от блокировки
         $browser      = getBrowser($ua);
         $os           = getOS($ua);
         $device_type  = getDeviceType($ua);
@@ -57,7 +82,7 @@ class VisitorStatsService
         $isp_data     = getIspInfo();
         $isp          = $isp_data['isp'] ?? null;
         $is_vpn       = $isp_data['is_vpn'] ?? 0;
-        $unique       = isUniqueVisitor();
+        $unique       = $blocked ? 0 : isUniqueVisitor();
 
         $visit_data = [
             'vs_date'         => Cot::$sys['now'],
@@ -75,7 +100,8 @@ class VisitorStatsService
             'vs_isp'          => $isp,
             'vs_is_vpn'       => $is_vpn,
             'vs_is_bot'       => $is_crawler ? 1 : 0,
-            'vs_unique'       => $unique
+            'vs_unique'       => $unique,
+            'vs_blocked'      => $blocked ? 1 : 0,
         ];
 
         $this->repository->insert($visit_data);
