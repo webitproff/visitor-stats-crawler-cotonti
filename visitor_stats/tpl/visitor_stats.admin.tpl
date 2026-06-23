@@ -108,7 +108,11 @@
                 <!-- BEGIN: LOG_ROW -->
                 <tr class="{LOG_ODDEVEN}">
                     <td>{LOG_DATE}</td>
-                    <td><code>{LOG_IP}</code></td>
+					<td>
+						<a href="https://whatismyipaddress.com/ip/{LOG_IP}" target="_blank" title="{PHP.L.visitor_stats_ip_info}">
+							<code>{LOG_IP}</code>
+						</a>
+					</td>
                     <td>{LOG_COUNTRY}</td>
                     <td>{LOG_BROWSER}</td>
                     <td>{LOG_OS}</td>
