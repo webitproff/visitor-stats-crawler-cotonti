@@ -35,6 +35,7 @@ $L['visitor_stats_only_bots'] = 'Показать только ботов';
 $L['visitor_stats_log'] = 'Журнал посещений';
 $L['visitor_stats_date'] = 'Дата';
 $L['visitor_stats_ip'] = 'IP';
+$L['visitor_stats_ip_info'] = 'Посмотреть информацию об IP (whatismyipaddress.com)';
 $L['visitor_stats_country'] = 'Страна';
 $L['visitor_stats_browser'] = 'Браузер';
 $L['visitor_stats_os'] = 'ОС';
