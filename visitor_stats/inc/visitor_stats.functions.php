@@ -14,7 +14,7 @@ require_once cot_langfile('visitor_stats', 'plug');
 require_once __DIR__ . '/CrawlerDetectService.php';
 require_once __DIR__ . '/VisitorStatsRepository.php';
 require_once __DIR__ . '/VisitorStatsService.php';
-
+require_once __DIR__ . '/../lib/Fixtures/WhitelistBots.php';
 Cot::$db->registerTable('visitor_stats');
 Cot::$db->registerTable('visitor_stats_daily');
 Cot::$db->registerTable('visitor_stats_crawlers');
@@ -198,4 +198,31 @@ function isUniqueVisitor()
         return 1; // новый
     }
     return 0; // вернувшийся
+}
+/**
+ * Проверяет, разрешён ли доступ данному краулеру (на основе белого списка)
+ *
+ * @param string|null $crawlerName Имя краулера (null, если не бот)
+ * @return bool true — разрешён, false — заблокировать
+ */
+function isAllowedBot($crawlerName)
+{
+    // Человек — всегда разрешён
+    if ($crawlerName === null || $crawlerName === '') {
+        return true;
+    }
+
+    // Подозрительные UA, маскирующиеся под старые устройства – блокируем
+    if ($crawlerName === 'Suspicious UA') {
+        return false;
+    }
+
+    $allowed = WhitelistBots::getAllowed();
+    foreach ($allowed as $bot) {
+        if (stripos($crawlerName, $bot) !== false) {
+            return true;
+        }
+    }
+
+    return false;
 }
