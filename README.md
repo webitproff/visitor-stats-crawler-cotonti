@@ -1,22 +1,24 @@
+# English: Website Visitor Statistics with Bot and Spider Detection
 
-# Visitor Statistics with Crawler Detection
-
-A plugin for Cotonti CMF that provides detailed tracking of site visits with extended analytics for each visit, and detection of search robots, crawlers, and spiders.  
+A plugin for Cotonti CMF that provides detailed tracking of website visits with extended analytics for each visitor and detection of search robots, crawlers, and spiders.  
 Data is stored in the database and is available for viewing in the administration panel.
 
 <img width="1168" height="784" alt="att_1184" src="https://github.com/user-attachments/assets/e2cbae5f-54b1-4c0c-ab05-d83d72451389" />
 
+
+
+
 ## Key Features
 
-### 📊 Collection and Storage of Detailed Visit Information
+### 📊 Collection and Storage of Detailed Information About Each Visit
 
-For every request to the site (excluding admin AJAX requests — configurable optionally), the following data is recorded in the `cot_visitor_stats` table:
+For every request to the site (excluding administrative AJAX requests — configurable optionally), the following data is recorded in the `cot_visitor_stats` table:
 
 - **Visitor IP address** with support for Cloudflare headers (`CF-Connecting-IP`), `X-Forwarded-For`, and `X-Real-IP`.  
   If the IP fails validation, `0.0.0.0` is recorded.
 - **User‑Agent** (browser/robot string) — saved in full (up to 500 characters).
 - **Cotonti user ID** (if the visitor is logged in).
-- **Site page** (REQUEST_URI) the visitor accessed.
+- **Site page** (REQUEST_URI) that the visitor accessed.
 - **Referer** — traffic source (up to 500 characters).
 - **Date and time** of the visit in UNIX timestamp format.
 
@@ -55,17 +57,60 @@ From the User‑Agent, the following are extracted:
 Based on a session variable, it is determined whether the visitor is new or returning.  
 `vs_unique` = `1` for the first visit, `0` for subsequent visits within the same session.
 
+### 🛡️ Bot Whitelist and Blocking of Unwanted Crawlers
+
+The plugin can **selectively block** bots that are not in the whitelist.  
+This allows you to:
+
+- Reduce server load by filtering out useless or malicious bots.
+- Only allow search robots and services that actually help with promotion (Google, Yandex, Bing, Facebook, PageSpeed Insights, Ahrefs, etc.).
+- Protect content from scraping by unwanted crawlers.
+
+**How it works:**
+
+1. **Whitelist** (`lib/Fixtures/WhitelistBots.php`)  
+   Contains an array of bot names that are allowed access. The check is performed by **case‑insensitive substring match**.  
+   The administrator can easily edit this file to add or remove bots.
+
+2. **Verification and blocking** — performed directly in the `global` hook (`visitor_stats.global.php`), which runs on every request.  
+   If a detected bot is not in the whitelist:
+   - The visit is recorded in the database with full detail and the flag **`vs_blocked = 1`**.
+   - The visitor receives an HTTP response **403 Forbidden** (HTML page).
+   - Further execution of Cotonti is stopped, saving resources.
+
+3. **Function `isAllowedBot()`** (in `inc/visitor_stats.functions.php`)  
+   - Always allows humans (`null` or empty bot name).
+   - Blocks “suspicious” UAs marked as `Suspicious UA`.
+   - Compares the bot name against the whitelist using `stripos()`.
+
+4. **Debug mode**  
+   In the same file `visitor_stats.global.php`, there is a `$debug` flag.  
+   When set to `true`, the plugin writes each event to `debug_bot.log`: time, User‑Agent, bot name, and the decision (ALLOWED/BLOCKED).
+
+### 🗑️ Automatic Table Cleanup on Schedule
+
+The plugin supports automatic cleanup of all three tables at a specified time interval.  
+By default, cleanup occurs **every 72 hours** without the need to configure cron.
+
+**How it works:**
+
+- Inside the folder `plugins/visitor_stats/last_cleanup/`, a service file `timestamp` is created, storing the time of the last cleanup.
+- On each request, the plugin checks whether a specified number of hours have passed since the last cleanup.
+- If the interval has been exceeded, the tables are cleaned, and the timestamp is updated.
+- Auto-cleanup is controlled by the `$autoCleanup` flag in `visitor_stats.global.php` (default is `true`; can be disabled).
+- Cleanup does not affect the table structures — only the data is removed.
+
 ### 📈 Administration Panel
 
 In the "Other" section of the Cotonti admin panel, a statistics page is available.  
 It provides:
 
 - **Cards** with overall figures: total visits, humans, bots, unique visitors.
-- **Period filter** (days) — currently decorative, will affect the data selection in the future.
+- **Period filter** (days) — currently decorative, will affect data selection in the future.
 - **"Show only bots" filter** — when enabled, the log table displays only rows where a bot/crawler was detected.
-- **Visit log table** with all stored fields (date, IP, country, browser, OS, type, model, ISP, VPN, bot, uniqueness, crawler name, page, referrer). Data is sorted by date (newest first).
+- **Visit log table** with all stored fields, including a **"Blocked"** column, which shows whether the visit was blocked by the plugin (based on the `vs_blocked` field).
 - **Pagination** (50 records per page).
-- **Full data clear button** — deletes all records from three tables (`cot_visitor_stats`, `cot_visitor_stats_daily`, `cot_visitor_stats_crawlers`) without removing their structure. Only available to administrators.
+- **Manual data clear button** — completely deletes all records from the three tables without removing their structure. Only available to administrators.
 
 The interface is built on Bootstrap 5.3, which is embedded in the Cotonti admin panel (no external styles need to be connected).
 
@@ -77,43 +122,47 @@ Russian and English languages are supported. Localization files are located in `
 
 ## Plugin Structure and File Descriptions
 ```
-
 plugins/visitor_stats/
-├── visitor_stats.setup.php               # Plugin configuration
-├── visitor_stats.admin.php               # Administration panel
-├── visitor_stats.global.php              # Global hook (runs on every request)
-├── visitor_stats.header.first.php        # Early blocking hook for unwanted bots
+├── visitor_stats.setup.php # Plugin configuration
+├── visitor_stats.admin.php # Administration panel
+├── visitor_stats.global.php # Global hook (visit recording, bot blocking, auto-cleanup, debugging)
 ├── inc/
-│   ├── visitor_stats.functions.php       # Helper functions and component loading
-│   ├── CrawlerDetectService.php          # Wrapper service for the CrawlerDetect library
-│   ├── VisitorStatsService.php           # Main business logic (data collection and recording)
-│   └── VisitorStatsRepository.php        # Database interaction layer
+│ ├── visitor_stats.functions.php # Helper functions and component loading
+│ ├── CrawlerDetectService.php # Wrapper service for the CrawlerDetect library
+│ ├── VisitorStatsService.php # Main business logic (data collection and recording)
+│ └── VisitorStatsRepository.php # Database interaction layer
 ├── lib/
-│   ├── CrawlerDetect.php                 # Main bot detection class (ported version)
-│   └── Fixtures/
-│       ├── AbstractProvider.php          # Abstract class for signature lists
-│       ├── Crawlers.php                  # Bot and crawler signatures
-│       ├── Exclusions.php                # Patterns excluded from User‑Agent before checking
-│       ├── Headers.php                   # Headers that may contain the User‑Agent
-│       └── WhitelistBots.php            # Whitelist of allowed bots
+│ ├── CrawlerDetect.php # Main bot detection class (ported version)
+│ └── Fixtures/
+│ ├── AbstractProvider.php # Abstract class for signature lists
+│ ├── Crawlers.php # Bot and crawler signatures
+│ ├── Exclusions.php # Patterns excluded from User‑Agent before checking
+│ ├── Headers.php # Headers that may contain the User‑Agent
+│ └── WhitelistBots.php # Whitelist of allowed bots
 ├── setup/
-│   ├── visitor_stats.install.sql         # SQL queries for table creation
-│   └── visitor_stats.uninstall.sql       # SQL queries for table removal
+│ ├── visitor_stats.install.sql # SQL queries for table creation
+│ └── visitor_stats.uninstall.sql # SQL queries for table removal
 ├── lang/
-│   ├── visitor_stats.en.lang.php         # English localization
-│   └── visitor_stats.ru.lang.php         # Russian localization
+│ ├── visitor_stats.en.lang.php # English localization
+│ └── visitor_stats.ru.lang.php # Russian localization
 ├── tpl/
-│   └── visitor_stats.admin.tpl           # Administration panel template
-└── index.html                            # Placeholder
-
+│ └── visitor_stats.admin.tpl # Administration panel template
+├── last_cleanup/ # Folder for the automatic cleanup timestamp
+│ └── timestamp # File with the time of the last auto-cleanup (created automatically)
+└── index.html # Placeholder
 ```
+
 
 ### Description of Key Components
 
 - **visitor_stats.setup.php** — plugin metadata: code, name, category, version, author, license, access rights for guests and users.
-- **visitor_stats.global.php** — entry point on every request. Loads the necessary files and calls `VisitorStatsService::recordVisit()` to record the visit. Contains the `global` hook.
-- **visitor_stats.admin.php** — controller for the statistics page in the admin panel. Processes filters, pagination, data clearing, builds database queries, and passes variables to the template.
-- **inc/visitor_stats.functions.php** — registers the plugin tables with `Cot::$db`, loads service classes, and contains a collection of functions for extracting visit information: `getRealIp()`, `getBrowser()`, `getOS()`, `getDeviceType()`, `getDeviceModel()`, `getCountry()`, `getIspInfo()`, `isUniqueVisitor()`. These functions can be used anywhere in Cotonti (including other plugins and templates).
+- **visitor_stats.global.php** — the central hook that runs on every request. It implements:
+  - calling `VisitorStatsService::recordVisit()` to record a visit,
+  - checking bots against the whitelist and blocking unwanted ones,
+  - automatic table cleanup based on the timestamp,
+  - optional debug logging of blocking events.
+- **visitor_stats.admin.php** — controller for the statistics page in the admin panel. Processes filters, pagination, manual data clearing, builds database queries, and passes variables to the template.
+- **inc/visitor_stats.functions.php** — registers the plugin tables with `Cot::$db`, loads service classes, and contains a collection of functions for extracting visit information: `getRealIp()`, `getBrowser()`, `getOS()`, `getDeviceType()`, `getDeviceModel()`, `getCountry()`, `getIspInfo()`, `isUniqueVisitor()`, as well as the whitelist check function `isAllowedBot()`. These functions can be used anywhere in Cotonti (including other plugins and templates).
 - **inc/CrawlerDetectService.php** — singleton service providing `isCrawler($ua)` and `getCrawlerName($ua)` methods. Each call creates a `CrawlerDetect` instance with the passed User‑Agent, ensuring up‑to‑date checking.
 - **inc/VisitorStatsService.php** — the main service that aggregates all visit data. The `recordVisit()` method collects IP, UA, geolocation, bot and uniqueness indicators, and then passes the array to the repository for database insertion.
 - **inc/VisitorStatsRepository.php** — database interaction class. Contains methods for inserting records (`insert`), getting statistics for a period (`countVisits`, `countBotVisits`, `countUniqueVisitors`), extracting top lists (`getTopPages`, `getTopReferers`, `getTopCrawlers`), and daily breakdowns (`getDailyBreakdown`). These methods are not yet used in the admin panel but are ready for use.
@@ -121,6 +170,7 @@ plugins/visitor_stats/
 - **lang/** — language files. They contain all text strings used in the admin panel and frontend (if needed).
 - **tpl/visitor_stats.admin.tpl** — statistics page template using Bootstrap 5.3 classes. No external stylesheets are needed since Cotonti already includes Bootstrap.
 - **setup/\*.sql** — SQL queries for creating and removing the plugin tables.
+- **last_cleanup/** — a service folder created by the plugin to store the automatic cleanup timestamp. Contains the file `timestamp` with the time of the last cleanup.
 
 ---
 
@@ -151,6 +201,7 @@ Stores every recorded session. Field details:
 | vs_is_vpn        | TINYINT(1)                   | 1 — VPN/proxy in use, 0 — no |
 | vs_is_bot        | TINYINT(1)                   | 1 — bot, 0 — human |
 | vs_unique        | TINYINT(1)                   | 1 — new visitor, 0 — returning |
+| vs_blocked       | TINYINT(1)                   | 1 — visit blocked by plugin, 0 — allowed |
 
 Indexes: PRIMARY (`vs_id`), KEY on `vs_date`, `vs_ip`, `vs_user_id`, `vs_crawler_name`.
 
@@ -206,13 +257,13 @@ To remove the plugin, use the standard procedure in the admin panel: the `visito
 
 ### Viewing Statistics
 
-In the Cotonti admin panel, under the **"Other"** section, a **"Visitor Statistics"** (or **Visitor Statistics** in the English version) item will appear.  
+In the Cotonti admin panel, under the **"Other"** section, a **"Visitor Statistics"** item will appear.  
 The page contains:
 
 - **Four cards** at the top: total visits, human visits, bot visits, unique visitors.
 - **Filter form**: a period in days can be set (does not affect the selection yet, left for future implementation) and a "Show only bots" checkbox can be ticked — then the table will show only rows where a crawler was detected.
-- **Log table** with paginated output of the latest visits. Columns correspond to all collected fields.
-- **"Clear all data" button** (only available to administrators). When clicked with confirmation, it completely deletes all records from the three tables without altering their structure.
+- **Log table** with paginated output of the latest visits. Columns correspond to all collected fields, including the "Blocked" column, showing the blocking status for each entry.
+- **Manual clear button** (only available to administrators). When clicked with confirmation, it completely deletes all records from the three tables without altering their structure.
 
 ### Information Functions
 
@@ -230,72 +281,22 @@ Anywhere in Cotonti (templates, other plugins), the following functions are avai
 
 They are defined in `visitor_stats.functions.php` and can be used after the plugin is activated.
 
-___
+### Configuring Auto-Cleanup
 
-## 🛡️ Bot Whitelist and Early Blocking of Unwanted Crawlers
+- **Enable/disable:** in the file `visitor_stats.global.php`, find the line  
+  `$autoCleanup = true;`  
+  To disable automatic cleanup, change `true` to `false`.
+- **Change the interval:** by default, cleanup occurs every 72 hours.  
+  To change the interval, edit the condition `($now - $lastCleanup) >= 72 * 3600` in the same file, substituting the desired number of seconds.
+- **Manual cleanup:** at any time, you can use the "Clear all data" button in the admin panel — it resets all tables and updates the automatic cleanup timestamp.
 
-### Why is this needed?
+### Managing the Bot Whitelist
 
-The plugin not only collects bot statistics but can also **selectively block** those that do not provide value to your site.  
-This allows you to:
+- **Adding a bot:** open the file `lib/Fixtures/WhitelistBots.php` and add a line with a substring of the bot's name to the `getAllowed()` array.  
+  For example, for DeepSeekBot: `'DeepSeekBot',`.
+- **Debugging:** to check which bots are blocked or allowed, temporarily enable debugging (`$debug = true`) in `visitor_stats.global.php` and analyze the `debug_bot.log` file. Remember to disable debugging after verification.
 
-- Reduce server load by filtering out useless or malicious bots before the main Cotonti code runs.
-- Only allow search robots and services that actually help with promotion (Google, Yandex, Bing, Facebook, PageSpeed Insights, Ahrefs, etc.).
-- Protect content from scraping by unwanted crawlers.
-
-### How it works
-
-1. **Whitelist** (`lib/Fixtures/WhitelistBots.php`)  
-   Contains an array of bot names that are allowed access. Matching is performed by **case‑insensitive substring search**.  
-   If the detected bot name contains any string from the whitelist, it is allowed through.  
-   The administrator can easily edit this file to add or remove bots as needed.
-
-2. **Hook `header.first`** (`visitor_stats.header.first.php`)  
-   Executes at the earliest stage of request processing, before any data is loaded.  
-   - Determines whether the visitor is a bot using `CrawlerDetectService`.
-   - If a bot is detected, calls the `isAllowedBot()` function, which checks the bot name against the whitelist.
-   - If the bot is **not allowed**:
-     - The script immediately returns an HTTP **403 Forbidden** response.
-     - The response body contains the plain text `Access denied for this bot.`
-     - Further Cotonti execution is stopped (`exit`), conserving resources.
-
-3. **Function `isAllowedBot()`** (in `inc/visitor_stats.functions.php`)  
-   - Always allows humans (`null` or empty bot name).
-   - Blocks “suspicious” UAs marked as `Suspicious UA` (old Android versions, emulation of outdated devices).
-   - Compares the bot name against the whitelist using `stripos()`.
-
-4. **Debug mode**  
-   The `visitor_stats.header.first.php` file contains a `$debug` flag.  
-   When set to `true`, the plugin writes every trigger event to `debug_bot.log`: timestamp, User‑Agent, bot name, and the decision (ALLOWED/BLOCKED).  
-   This helps track which bots are trying to access the site and whether any desired bots are being blocked.
-
-### How to add a new bot to the whitelist
-
-1. Open the file `plugins/visitor_stats/lib/Fixtures/WhitelistBots.php`.
-2. Add a new line to the `getAllowed()` array with a substring of the bot’s name, e.g.:
-   ```
-   'yourNameBot',
-   ```
-3. Save the file.
-
-Changes take effect immediately (on the next request).
-
-### Recommendations for configuring the whitelist
-
-- Keep only bots that provide real value:
-  - Search engines (Google, Bing, Yandex, Seznam, Baidu, Sogou, etc.).
-  - Performance analyzers (Lighthouse, PageSpeed Insights).
-  - Webmaster services (Google Inspection Tool, Facebook External Hit).
-  - Popular SEO tools (Ahrefs, Semrush, DotBot), if you are fine with their crawling.
-  - Useful AI crawlers (GPTBot, ChatGPT‑User, Claude‑Web), if you want your content to be used for model training or to appear in AI‑powered search results.
-- All other bots will be automatically blocked by the plugin, reducing parasitic traffic.
-
-### Verifying the setup
-
-After adding new rules, you can enable debug mode (`$debug = true`) and check the `debug_bot.log` file to ensure that desired bots are allowed and unwanted ones are blocked.  
-Remember to turn off debug mode once verification is complete to prevent the log from growing indefinitely.
-
-___
+---
 
 ## Technical Details
 
@@ -327,8 +328,7 @@ The Crawler-Detect library is MIT.
 Author: [webitproff](https://github.com/webitproff).  
 Repository: [https://github.com/webitproff/visitor-stats-crawler-cotonti](https://github.com/webitproff/visitor-stats-crawler-cotonti)
 
----
-
+___
 # Русский: Статистика посещений сайта с проверкой ботов и пауков
 
 Плагин для Cotonti CMF, обеспечивающий детальный учёт посещений сайта с расширенной аналитикой по каждому визиту и определением поисковых роботов, краулеров и пауков.  
@@ -383,6 +383,49 @@ Repository: [https://github.com/webitproff/visitor-stats-crawler-cotonti](https:
 На основе сессионной переменной определяется, новый это посетитель или вернувшийся.  
 `vs_unique` = `1` для первого визита, `0` для последующих заходов в рамках одной сессии.
 
+### 🛡️ Белый список ботов и блокировка нежелательных краулеров
+
+Плагин умеет **избирательно блокировать** ботов, не входящих в белый список.  
+Это позволяет:
+
+- Снизить нагрузку на сервер, отсекая бесполезных или вредоносных ботов.
+- Пропускать только тех поисковых роботов и сервисы, которые реально помогают продвижению (Google, Яндекс, Bing, Facebook, PageSpeed Insights, Ahrefs и т.п.).
+- Защитить контент от парсинга нежелательными краулерами.
+
+**Как это работает:**
+
+1. **Белый список** (`lib/Fixtures/WhitelistBots.php`)  
+   Содержит массив имён ботов, которым разрешён доступ. Проверка идёт по **частичному совпадению без учёта регистра**.  
+   Администратор может легко редактировать этот файл.
+
+2. **Проверка и блокировка** — происходят непосредственно в хуке `global` (`visitor_stats.global.php`), который выполняется при каждом запросе.  
+   Если обнаруженный бот отсутствует в белом списке:
+   - Визит записывается в БД с полной детализацией и флагом **`vs_blocked = 1`**.
+   - Посетителю отдаётся HTTP‑ответ **403 Forbidden** (HTML‑страница).
+   - Дальнейшее выполнение Cotonti прекращается, экономя ресурсы.
+
+3. **Функция `isAllowedBot()`** (в `inc/visitor_stats.functions.php`)  
+   - Всегда разрешает людей (`null` или пустое имя бота).
+   - Блокирует «подозрительные» UA, помеченные как `Suspicious UA`.
+   - Сравнивает имя бота с белым списком через `stripos()`.
+
+4. **Отладочный режим**  
+   В том же файле `visitor_stats.global.php` есть флаг `$debug`.  
+   Если установить его в `true`, плагин будет записывать в лог `debug_bot.log` каждое срабатывание: время, User‑Agent, имя бота и решение (ALLOWED/BLOCKED).
+
+### 🗑️ Автоматическая очистка таблиц по расписанию
+
+Плагин поддерживает автоматическую очистку всех трёх таблиц через заданный интервал времени.  
+По умолчанию очистка происходит **каждые 72 часа** без необходимости в настройке cron.
+
+**Принцип работы:**
+
+- В папке `plugins/visitor_stats/last_cleanup/` создаётся служебный файл `timestamp`, хранящий время последней очистки.
+- При каждом запросе плагин проверяет, прошло ли с момента последней очистки заданное количество часов.
+- Если интервал превышен, таблицы очищаются, а временная метка обновляется.
+- Автоочистка управляется флагом `$autoCleanup` в `visitor_stats.global.php` (по умолчанию `true`, можно отключить).
+- Очистка не затрагивает структуру таблиц – удаляются только данные.
+
 ### 📈 Административная панель
 
 В разделе «Прочее» админки Cotonti доступна страница статистики.  
@@ -391,9 +434,9 @@ Repository: [https://github.com/webitproff/visitor-stats-crawler-cotonti](https:
 - **Карточки** с общими цифрами: всего визитов, людей, ботов, уникальных посетителей.
 - **Фильтр по периоду** (дни) — пока декоративный, в будущем будет влиять на выборку.
 - **Фильтр «Показать только ботов»** — при включении таблица журнала отображает только строки, где обнаружен бот/краулер.
-- **Таблица журнала посещений** со всеми сохранёнными полями (дата, IP, страна, браузер, ОС, тип, модель, провайдер, VPN, бот, уникальность, имя краулера, страница, реферер). Данные отсортированы по дате (сначала новые).
+- **Таблица журнала посещений** со всеми сохранёнными полями, включая колонку **«Заблокирован»**, которая показывает, был ли визит заблокирован плагином (на основе поля `vs_blocked`).
 - **Пагинация** (по 50 записей на страницу).
-- **Кнопка полной очистки данных** — удаляет все записи из трёх таблиц (`cot_visitor_stats`, `cot_visitor_stats_daily`, `cot_visitor_stats_crawlers`) без удаления структуры. Доступна только администраторам.
+- **Кнопка ручной очистки данных** — полностью удаляет все записи из трёх таблиц без удаления структуры. Доступна только администраторам.
 
 Интерфейс построен на Bootstrap 5.3, встроенном в админку Cotonti (стили подключать не нужно).
 
@@ -408,8 +451,7 @@ Repository: [https://github.com/webitproff/visitor-stats-crawler-cotonti](https:
 plugins/visitor_stats/
 ├── visitor_stats.setup.php               # Конфигурация плагина
 ├── visitor_stats.admin.php               # Административная панель
-├── visitor_stats.global.php              # Глобальный хук (запускается при каждом запросе)
-├── visitor_stats.header.first.php        # Хук ранней блокировки нежелательных ботов
+├── visitor_stats.global.php              # Глобальный хук (запись визитов, блокировка ботов, автоочистка, отладка)
 ├── inc/
 │   ├── visitor_stats.functions.php       # Вспомогательные функции и подключение компонентов
 │   ├── CrawlerDetectService.php          # Сервис-обёртка над библиотекой CrawlerDetect
@@ -431,17 +473,21 @@ plugins/visitor_stats/
 │   └── visitor_stats.ru.lang.php         # Русская локализация
 ├── tpl/
 │   └── visitor_stats.admin.tpl           # Шаблон административной панели
+├── last_cleanup/                         # Папка для временной метки автоматической очистки
+│   └── timestamp                         # Файл с временем последней автоочистки (создаётся автоматически)
 └── index.html                            # Заглушка
-
-
 ```
 
 ### Описание ключевых компонентов
 
 - **visitor_stats.setup.php** — метаданные плагина: код, название, категория, версия, автор, лицензия, права доступа для гостей и пользователей.
-- **visitor_stats.global.php** — точка входа при каждом запросе. Подключает необходимые файлы и вызывает `VisitorStatsService::recordVisit()` для записи визита. Содержит хук `global`.
-- **visitor_stats.admin.php** — контроллер страницы статистики в админке. Обрабатывает фильтры, пагинацию, очистку данных, формирует запросы к БД и передаёт переменные в шаблон.
-- **inc/visitor_stats.functions.php** — регистрирует таблицы плагина в `Cot::$db`, подключает сервисные классы и содержит коллекцию функций для извлечения информации о визите: `getRealIp()`, `getBrowser()`, `getOS()`, `getDeviceType()`, `getDeviceModel()`, `getCountry()`, `getIspInfo()`, `isUniqueVisitor()`. Эти функции могут использоваться в любом месте Cotonti (в том числе в других плагинах и шаблонах).
+- **visitor_stats.global.php** — центральный хук, выполняющийся при каждом запросе. В нём реализованы:
+  - вызов `VisitorStatsService::recordVisit()` для записи визита,
+  - проверка ботов по белому списку и блокировка нежелательных,
+  - автоматическая очистка таблиц по временной метке,
+  - опциональный отладочный лог блокировок.
+- **visitor_stats.admin.php** — контроллер страницы статистики в админке. Обрабатывает фильтры, пагинацию, ручную очистку данных, формирует запросы к БД и передаёт переменные в шаблон.
+- **inc/visitor_stats.functions.php** — регистрирует таблицы плагина в `Cot::$db`, подключает сервисные классы и содержит коллекцию функций для извлечения информации о визите: `getRealIp()`, `getBrowser()`, `getOS()`, `getDeviceType()`, `getDeviceModel()`, `getCountry()`, `getIspInfo()`, `isUniqueVisitor()`, а также функцию проверки белого списка `isAllowedBot()`. Эти функции могут использоваться в любом месте Cotonti (в том числе в других плагинах и шаблонах).
 - **inc/CrawlerDetectService.php** — сервис-одиночка, предоставляющий методы `isCrawler($ua)` и `getCrawlerName($ua)`. При каждом вызове создаёт экземпляр `CrawlerDetect` с переданным User‑Agent, что гарантирует актуальную проверку.
 - **inc/VisitorStatsService.php** — главный сервис, агрегирующий все данные о визите. В методе `recordVisit()` собираются IP, UA, геолокация, признаки бота и уникальности, после чего массив передаётся в репозиторий для вставки в БД.
 - **inc/VisitorStatsRepository.php** — класс для работы с базой данных. Содержит методы для вставки записей (`insert`), получения статистики за период (`countVisits`, `countBotVisits`, `countUniqueVisitors`), извлечения топов (`getTopPages`, `getTopReferers`, `getTopCrawlers`) и дневной разбивки (`getDailyBreakdown`). Эти методы пока не задействованы в админке, но готовы к использованию.
@@ -449,6 +495,7 @@ plugins/visitor_stats/
 - **lang/** — языковые файлы. Содержат все текстовые строки, используемые в админке и фронтальной части (при необходимости).
 - **tpl/visitor_stats.admin.tpl** — шаблон страницы статистики с использованием классов Bootstrap 5.3. Не требует подключения внешних стилей, так как Cotonti уже включает Bootstrap.
 - **setup/\*.sql** — SQL-запросы для создания и удаления таблиц плагина.
+- **last_cleanup/** — служебная папка, создаваемая плагином для хранения временной метки автоматической очистки. Содержит файл `timestamp` с временем последней очистки.
 
 ---
 
@@ -479,6 +526,7 @@ plugins/visitor_stats/
 | vs_is_vpn        | TINYINT(1)       | 1 — используется VPN/прокси, 0 — нет |
 | vs_is_bot        | TINYINT(1)       | 1 — бот, 0 — человек |
 | vs_unique        | TINYINT(1)       | 1 — новый посетитель, 0 — вернувшийся |
+| vs_blocked       | TINYINT(1)       | 1 — визит заблокирован плагином, 0 — пропущен |
 
 Индексы: PRIMARY (`vs_id`), KEY по `vs_date`, `vs_ip`, `vs_user_id`, `vs_crawler_name`.
 
@@ -539,8 +587,8 @@ plugins/visitor_stats/
 
 - **Четыре карточки** в верхней части: общее количество визитов, визиты людей, визиты ботов, уникальные посетители.
 - **Форму фильтра**: можно задать период в днях (пока не влияет на выборку, оставлено для будущей реализации) и отметить чекбокс «Показать только ботов» — тогда таблица покажет только строки, где обнаружен краулер.
-- **Таблицу журнала** с постраничным выводом последних визитов. Колонки соответствуют всем собранным полям.
-- **Кнопку «Очистить все данные»** (доступна только администраторам). При нажатии с подтверждением полностью удаляет все записи из трёх таблиц, но не трогает их структуру.
+- **Таблицу журнала** с постраничным выводом последних визитов. Колонки соответствуют всем собранным полям, включая колонку «Заблокирован», отображающую статус блокировки для каждой записи.
+- **Кнопку ручной очистки** (доступна только администраторам). При нажатии с подтверждением полностью удаляет все записи из трёх таблиц, но не трогает их структуру.
 
 ### Информационные функции
 
@@ -558,72 +606,23 @@ plugins/visitor_stats/
 
 Они определены в `visitor_stats.functions.php` и могут использоваться после активации плагина.
 
-___
+### Настройка автоочистки
 
-## 🛡️ Белый список ботов и ранняя блокировка нежелательных краулеров
+- **Включение/отключение:** в файле `visitor_stats.global.php` найдите строку  
+  `$autoCleanup = true;`  
+  Чтобы отключить автоматическую очистку, замените `true` на `false`.
+- **Изменение интервала:** по умолчанию очистка происходит каждые 72 часа.  
+  Для изменения интервала отредактируйте условие `($now - $lastCleanup) >= 72 * 3600` в том же файле, подставив нужное количество секунд.
+- **Ручная очистка:** в любое время можно воспользоваться кнопкой «Очистить все данные» в админке — она сбрасывает все таблицы и обновляет временную метку автоматической очистки.
 
-### Зачем это нужно
+### Управление белым списком ботов
 
-Плагин не только собирает статистику по ботам, но и умеет **избирательно блокировать** тех из них, которые не представляют ценности для вашего сайта.  
-Это позволяет:
+- **Добавление бота:** откройте файл `lib/Fixtures/WhitelistBots.php` и добавьте строку с частью имени бота в массив `getAllowed()`.  
+  Например, для DeepSeekBot: `'DeepSeekBot',`.
+- **Отладка:** для проверки, какие боты блокируются или пропускаются, временно включите отладку (`$debug = true`) в `visitor_stats.global.php` и анализируйте лог `debug_bot.log`. Не забудьте отключить отладку после проверки.
 
-- Снизить нагрузку на сервер, отсекая бесполезных или вредоносных ботов до выполнения основного кода Cotonti.
-- Пропускать только тех поисковых роботов и сервисы, которые реально помогают продвижению (Google, Яндекс, Bing, Facebook, PageSpeed Insights, Ahrefs и т.п.).
-- Защитить контент от парсинга нежелательными краулерами.
+---
 
-### Как это работает
-
-1. **Белый список** (`lib/Fixtures/WhitelistBots.php`)  
-   Содержит массив имён ботов, которым разрешён доступ. Проверка идёт по **частичному совпадению без учёта регистра**.  
-   Если имя обнаруженного бота содержит любую из строк белого списка — он пропускается.  
-   Администратор может легко редактировать этот файл, добавляя или удаляя нужных ботов.
-
-2. **Хук `header.first`** (`visitor_stats.header.first.php`)  
-   Выполняется на самом раннем этапе обработки запроса, до загрузки каких‑либо данных.  
-   - Определяет, является ли посетитель ботом, с помощью `CrawlerDetectService`.
-   - Если бот обнаружен, вызывает функцию `isAllowedBot()`, которая сверяет имя бота с белым списком.
-   - Если бот **не разрешён**:
-     - Скрипт немедленно отдаёт HTTP‑ответ **403 Forbidden**.
-     - Тело ответа содержит простой текст `Access denied for this bot.`
-     - Дальнейшее выполнение Cotonti прекращается (вызов `exit`), что экономит ресурсы.
-
-3. **Функция `isAllowedBot()`** (в `inc/visitor_stats.functions.php`)  
-   - Всегда разрешает людей (`null` или пустое имя бота).
-   - Блокирует «подозрительные» UA, помеченные как `Suspicious UA` (старые Android, эмуляция устаревших устройств).
-   - Сравнивает имя бота с белым списком через `stripos()`.
-
-4. **Отладочный режим**  
-   В файле `visitor_stats.header.first.php` есть флаг `$debug`.  
-   Если установить его в `true`, плагин будет записывать в лог `debug_bot.log` каждое срабатывание: время, User‑Agent, имя бота и решение (ALLOWED/BLOCKED).  
-   Это помогает отследить, какие боты пытаются заходить и не блокируется ли кто‑то нужный.
-
-### Как добавить нового бота в белый список
-
-1. Откройте файл `plugins/visitor_stats/lib/Fixtures/WhitelistBots.php`.
-2. В массиве `getAllowed()` добавьте новую строку с частью имени бота, например:
-   ```
-   'yourNameBot',
-   ```
-3. Сохраните файл.
-
-Изменения вступают в силу немедленно (при следующем запросе).
-
-### Рекомендации по настройке белого списка
-
-- Оставляйте в списке только тех ботов, которые приносят реальную пользу:
-  - Поисковые системы (Google, Bing, Яндекс, Seznam, Baidu, Sogou и др.).
-  - Анализаторы скорости (Lighthouse, PageSpeed Insights).
-  - Сервисы для вебмастеров (Google Inspection Tool, Facebook External Hit).
-  - Популярные SEO‑инструменты (Ahrefs, Semrush, DotBot), если вы не против их сканирования.
-  - Полезные AI‑краулеры (GPTBot, ChatGPT‑User, Claude‑Web), если вы хотите, чтобы ваш контент использовался для обучения моделей или появлялся в результатах AI‑поиска.
-- Всех остальных ботов плагин будет автоматически блокировать, снижая паразитный трафик.
-
-### Проверка работы
-
-После добавления новых правил можно включить отладку (`$debug = true`) и проанализировать лог `debug_bot.log`, чтобы убедиться, что нужные боты пропускаются, а нежелательные блокируются.  
-Не забудьте выключить отладку после проверки, чтобы лог не разрастался.
-
-___
 ## Технические детали
 
 - **Требования:** Cotonti ≥ 1.0 (с поддержкой PHP 8.x), PHP 8.0+, MySQL 5.7+ (или MariaDB).
@@ -645,7 +644,6 @@ ___
 - Интеграция с Cotonti API для получения статистики через REST.
 
 ---
-
 
 ## Лицензия
 
