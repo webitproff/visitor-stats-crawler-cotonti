@@ -5,7 +5,7 @@
  * Date: June 23Th, 2026
  * 
  * @package visitor_stats
- * @version 1.0.27
+ * @version 1.0.28
  * @author webitproff
  * @copyright Copyright (c) webitproff 2026 | https://github.com/webitproff/visitor-stats-crawler-cotonti
  * @license BSD
@@ -52,3 +52,7 @@ $L['visitor_stats_referer'] = 'Referrer';
 $L['visitor_stats_clear'] = 'Clear all data';
 $L['visitor_stats_clear_confirm'] = 'Are you sure you want to delete ALL statistics records? This action cannot be undone.';
 $L['Apply'] = 'Apply';
+$L['visitor_stats_blocked_visitors'] = 'Blocked';
+$L['visitor_stats_show_blocked'] = 'Show only blocked';
+$L['visitor_stats_filter_referer'] = 'Filter by referer';
+$L['visitor_stats_reset_filter'] = 'Reset filter';
