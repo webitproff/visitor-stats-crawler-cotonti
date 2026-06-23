@@ -6,7 +6,7 @@
  * Date: June 23Th, 2026
  * 
  * @package visitor_stats
- * @version 1.0.27
+ * @version 1.0.28
  * @author webitproff
  * @copyright Copyright (c) webitproff 2026 | https://github.com/webitproff/visitor-stats-crawler-cotonti
  * @license BSD
@@ -53,3 +53,7 @@ $L['visitor_stats_referer'] = 'Источник';
 $L['visitor_stats_clear'] = 'Очистить все данные';
 $L['visitor_stats_clear_confirm'] = 'Вы уверены, что хотите удалить ВСЕ записи статистики? Это действие необратимо.';
 $L['Apply'] = 'Применить';
+$L['visitor_stats_blocked_visitors'] = 'Заблокированных';
+$L['visitor_stats_show_blocked'] = 'Показать только заблокированных';
+$L['visitor_stats_filter_referer'] = 'Фильтр по источнику';
+$L['visitor_stats_reset_filter'] = 'Сбросить фильтр';
