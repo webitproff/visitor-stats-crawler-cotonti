@@ -77,30 +77,32 @@ Russian and English languages are supported. Localization files are located in `
 ```
 
 plugins/visitor_stats/
-├── visitor_stats.setup.php # Plugin configuration
-├── visitor_stats.admin.php # Administration panel
-├── visitor_stats.global.php # Global hook (runs on every request)
+├── visitor_stats.setup.php               # Plugin configuration
+├── visitor_stats.admin.php               # Administration panel
+├── visitor_stats.global.php              # Global hook (runs on every request)
+├── visitor_stats.header.first.php        # Early blocking hook for unwanted bots
 ├── inc/
-│ ├── visitor_stats.functions.php # Helper functions and component loading
-│ ├── CrawlerDetectService.php # Wrapper service for the CrawlerDetect library
-│ ├── VisitorStatsService.php # Main business logic (data collection and recording)
-│ └── VisitorStatsRepository.php # Database interaction layer
+│   ├── visitor_stats.functions.php       # Helper functions and component loading
+│   ├── CrawlerDetectService.php          # Wrapper service for the CrawlerDetect library
+│   ├── VisitorStatsService.php           # Main business logic (data collection and recording)
+│   └── VisitorStatsRepository.php        # Database interaction layer
 ├── lib/
-│ ├── CrawlerDetect.php # Main bot detection class (ported version)
-│ └── Fixtures/
-│ ├── AbstractProvider.php # Abstract class for signature lists
-│ ├── Crawlers.php # Bot and crawler signatures
-│ ├── Exclusions.php # Patterns excluded from User‑Agent before checking
-│ └── Headers.php # Headers that may contain the User‑Agent
+│   ├── CrawlerDetect.php                 # Main bot detection class (ported version)
+│   └── Fixtures/
+│       ├── AbstractProvider.php          # Abstract class for signature lists
+│       ├── Crawlers.php                  # Bot and crawler signatures
+│       ├── Exclusions.php                # Patterns excluded from User‑Agent before checking
+│       ├── Headers.php                   # Headers that may contain the User‑Agent
+│       └── WhitelistBots.php            # Whitelist of allowed bots
 ├── setup/
-│ ├── visitor_stats.install.sql # SQL queries for table creation
-│ └── visitor_stats.uninstall.sql # SQL queries for table removal
+│   ├── visitor_stats.install.sql         # SQL queries for table creation
+│   └── visitor_stats.uninstall.sql       # SQL queries for table removal
 ├── lang/
-│ ├── visitor_stats.en.lang.php # English localization
-│ └── visitor_stats.ru.lang.php # Russian localization
+│   ├── visitor_stats.en.lang.php         # English localization
+│   └── visitor_stats.ru.lang.php         # Russian localization
 ├── tpl/
-│ └── visitor_stats.admin.tpl # Administration panel template
-└── index.html # Placeholder
+│   └── visitor_stats.admin.tpl           # Administration panel template
+└── index.html                            # Placeholder
 
 ```
 
@@ -402,30 +404,32 @@ Repository: [https://github.com/webitproff/visitor-stats-crawler-cotonti](https:
 ## Структура плагина и назначение файлов
 ```
 plugins/visitor_stats/
-├── visitor_stats.setup.php # Конфигурация плагина
-├── visitor_stats.admin.php # Административная панель
-├── visitor_stats.global.php # Глобальный хук (запускается при каждом запросе)
+├── visitor_stats.setup.php               # Конфигурация плагина
+├── visitor_stats.admin.php               # Административная панель
+├── visitor_stats.global.php              # Глобальный хук (запускается при каждом запросе)
+├── visitor_stats.header.first.php        # Хук ранней блокировки нежелательных ботов
 ├── inc/
-│ ├── visitor_stats.functions.php # Вспомогательные функции и подключение компонентов
-│ ├── CrawlerDetectService.php # Сервис-обёртка над библиотекой CrawlerDetect
-│ ├── VisitorStatsService.php # Основная бизнес-логика (сбор и запись данных)
-│ └── VisitorStatsRepository.php # Слой работы с базой данных
+│   ├── visitor_stats.functions.php       # Вспомогательные функции и подключение компонентов
+│   ├── CrawlerDetectService.php          # Сервис-обёртка над библиотекой CrawlerDetect
+│   ├── VisitorStatsService.php           # Основная бизнес-логика (сбор и запись данных)
+│   └── VisitorStatsRepository.php        # Слой работы с базой данных
 ├── lib/
-│ ├── CrawlerDetect.php # Главный класс детектирования ботов (портированная версия)
-│ └── Fixtures/
-│ ├── AbstractProvider.php # Абстрактный класс для списков сигнатур
-│ ├── Crawlers.php # Сигнатуры ботов и краулеров
-│ ├── Exclusions.php # Шаблоны, исключаемые из User‑Agent перед проверкой
-│ └── Headers.php # Заголовки, в которых может передаваться User‑Agent
+│   ├── CrawlerDetect.php                 # Главный класс детектирования ботов (портированная версия)
+│   └── Fixtures/
+│       ├── AbstractProvider.php          # Абстрактный класс для списков сигнатур
+│       ├── Crawlers.php                  # Сигнатуры ботов и краулеров
+│       ├── Exclusions.php                # Шаблоны, исключаемые из User‑Agent перед проверкой
+│       ├── Headers.php                   # Заголовки, в которых может передаваться User‑Agent
+│       └── WhitelistBots.php            # Белый список разрешённых ботов
 ├── setup/
-│ ├── visitor_stats.install.sql # SQL-запросы для создания таблиц
-│ └── visitor_stats.uninstall.sql # SQL-запросы для удаления таблиц
+│   ├── visitor_stats.install.sql         # SQL-запросы для создания таблиц
+│   └── visitor_stats.uninstall.sql       # SQL-запросы для удаления таблиц
 ├── lang/
-│ ├── visitor_stats.en.lang.php # Английская локализация
-│ └── visitor_stats.ru.lang.php # Русская локализация
+│   ├── visitor_stats.en.lang.php         # Английская локализация
+│   └── visitor_stats.ru.lang.php         # Русская локализация
 ├── tpl/
-│ └── visitor_stats.admin.tpl # Шаблон административной панели
-└── index.html # Заглушка
+│   └── visitor_stats.admin.tpl           # Шаблон административной панели
+└── index.html                            # Заглушка
 
 
 ```
