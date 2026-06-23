@@ -34,6 +34,7 @@ $L['visitor_stats_only_bots'] = 'Show only bots';
 $L['visitor_stats_log'] = 'Visit log';
 $L['visitor_stats_date'] = 'Date';
 $L['visitor_stats_ip'] = 'IP';
+$L['visitor_stats_ip_info'] = 'View IP information (whatismyipaddress.com)';
 $L['visitor_stats_country'] = 'Country';
 $L['visitor_stats_browser'] = 'Browser';
 $L['visitor_stats_os'] = 'OS';
