@@ -1,0 +1,63 @@
+<?php
+/**
+ * Exclusions Fixture
+ * File: plugins/visitor_stats/lib/Fixtures/Exclusions.php
+ */
+
+class Exclusions extends AbstractProvider
+{
+    protected $data = [
+        'Safari/[\d\.]+',
+        'Firefox/[\d\.]+',
+        'Chrome/[\d\.]+',
+        'Chromium/[\d\.]+',
+        'MSIE [\d\.]+',
+        'Opera/[\d\.]+',
+        'Mozilla/[\d\.]+',
+        'AppleWebKit/[\d\.]+',
+        'Trident/[\d\.]+',
+        'Windows NT [\d\.]+',
+        'Android [\d\.]+',
+        'Macintosh',
+        'Ubuntu',
+        'Linux',
+        '[ ]Intel',
+        'Mac OS X [\d_]+',
+        '(like )?Gecko(/[\d\.]+)?',
+        'KHTML,',
+        'CriOS/[\d\.]+',
+        'CPU iPhone OS [\d_]+ like Mac OS X',
+        'CPU OS [\d_]+ like Mac OS X',
+        'iPod',
+        'compatible',
+        'x86_..',
+        'i686',
+        'x64',
+        'X11',
+        'rv:[\d\.]+',
+        'Version/[\d\.]+',
+        'WOW64',
+        'Win64',
+        'Dalvik/[\d\.]+',
+        ' \.NET CLR [\d\.]+',
+        'Presto/[\d\.]+',
+        'Media Center PC',
+        'BlackBerry',
+        'Build',
+        'Opera Mini/[\d\.]+',
+        'Opera',
+        ' \.NET[\d\.]*',
+        'cubot',
+        '; M bot',
+        '; CRONO',
+        '; B bot',
+        '; IDbot',
+        '; ID bot',
+        '; POWER BOT',
+        'OCTOPUS-CORE',
+        'htc_botdugls',
+        'super/\d+/Android/\d+',
+        '"Yandex"',
+        'YandexModule2',
+    ];
+}
