@@ -23,7 +23,7 @@ Hooks=tools
 list(Cot::$usr['auth_read'], Cot::$usr['auth_write'], Cot::$usr['isadmin']) = cot_auth('plug', 'visitor_stats');
 cot_block(Cot::$usr['auth_read']);
 
-require_once cot_langfile('visitor_stats', 'plug');
+
 require_once cot_incfile('visitor_stats', 'plug');
 
 $tt = new XTemplate(cot_tplfile('visitor_stats.admin', 'plug', true));
