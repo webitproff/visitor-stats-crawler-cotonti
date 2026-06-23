@@ -1,10 +1,9 @@
-# English: Website Visitor Statistics with Bot and Spider Detection
+# English: Website Visitor Statistics with Bot and Spider Detection (**version 1.0.28**)
 
 A plugin for Cotonti CMF that provides detailed tracking of website visits with extended analytics for each visitor and detection of search robots, crawlers, and spiders.  
 Data is stored in the database and is available for viewing in the administration panel.
 
 <img width="1168" height="784" alt="att_1184" src="https://github.com/user-attachments/assets/e2cbae5f-54b1-4c0c-ab05-d83d72451389" />
-
 
 
 
