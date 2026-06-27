@@ -9,10 +9,10 @@ Hooks=tools
  * Administration panel - Visitor Statistics
  * File: plugins/visitor_stats/visitor_stats.admin.php
  * 
- * Date: June 23Th, 2026
+ * Date: June 27Th, 2026
  * 
  * @package visitor_stats
- * @version 1.0.28
+ * @version 1.0.29
  * @author webitproff
  * @copyright Copyright (c) webitproff 2026 | https://github.com/webitproff/visitor-stats-crawler-cotonti
  * @license BSD
@@ -46,13 +46,9 @@ if ($days < 1) {
 $only_bots     = cot_import('only_bots', 'G', 'INT', 0);
 $show_blocked  = cot_import('show_blocked', 'G', 'INT', 0);
 $filter_referer = cot_import('referer', 'G', 'TXT', '');
-$page          = cot_import('page', 'G', 'INT', 1);
-if ($page < 1) $page = 1;
-$limit  = 50;
-$offset = ($page - 1) * $limit;
-
-// Явно приводим к строке для безопасности
 $filter_referer = (string) $filter_referer;
+$limit = 50;
+list($pg, $d, $durl) = cot_import_pagenav('d', $limit);
 
 $t_vis = Cot::$db->quoteTableName(Cot::$db->visitor_stats);
 
@@ -78,14 +74,9 @@ if (!empty($filter_referer)) {
 }
 
 $total_items = Cot::$db->query("SELECT COUNT(*) FROM $t_vis WHERE $condition", $params)->fetchColumn();
-$total_pages = ceil($total_items / $limit);
-if ($total_pages > 0 && $page > $total_pages) {
-    $page   = $total_pages;
-    $offset = ($page - 1) * $limit;
-}
 
 $log_entries = Cot::$db->query(
-    "SELECT * FROM $t_vis WHERE $condition ORDER BY vs_date DESC LIMIT $limit OFFSET $offset",
+    "SELECT * FROM $t_vis WHERE $condition ORDER BY vs_date DESC LIMIT $d, $limit",
     $params
 )->fetchAll(PDO::FETCH_ASSOC);
 
@@ -100,8 +91,8 @@ $tt->assign([
     'VAL_ONLY_BOTS'     => $only_bots,
     'VAL_SHOW_BLOCKED'  => $show_blocked,
     'VAL_FILTER_REFERER'=> htmlspecialchars($filter_referer),
-    'VAL_PAGE'          => $page,
-    'VAL_TOTAL_PAGES'   => $total_pages,
+    'VAL_PAGE'          => $pg,
+    'VAL_TOTAL_PAGES'   => ceil($total_items / $limit),
     'VAL_TOTAL_ITEMS'   => $total_items,
 ]);
 
@@ -124,25 +115,24 @@ foreach ($log_entries as $row) {
         'LOG_REFERER'      => htmlspecialchars($row['vs_referer'] ?? ''),
         'LOG_ODDEVEN'      => cot_build_oddeven($ii),
         'LOG_BLOCKED'      => $row['vs_blocked'] ? Cot::$L['visitor_stats_blocked_yes'] : Cot::$L['visitor_stats_blocked_no'],
-		'LOG_BLOCKED_CLASS' => $row['vs_blocked'] ? 'table-danger' : 'table-success',
+        'LOG_BLOCKED_CLASS' => $row['vs_blocked'] ? 'table-danger' : 'table-success',
     ]);
     $tt->parse('MAIN.LOG_ROW');
     $ii++;
 }
 
 // Пагинация
-if ($total_pages > 1) {
-    $pagination = cot_pagenav(
-        'admin',
-        'm=other&p=visitor_stats&days=' . $days . '&only_bots=' . $only_bots . '&show_blocked=' . $show_blocked . '&referer=' . urlencode($filter_referer),
-        $offset,
-        $total_items,
-        $limit,
-        'page'
-    );
-    $tt->assign(cot_generatePaginationTags($pagination));
-    $tt->parse('MAIN.PAGINATION');
-}
+$urlParams = [
+    'm' => 'other',
+    'p' => 'visitor_stats',
+    'days' => $days,
+    'only_bots' => $only_bots,
+    'show_blocked' => $show_blocked,
+    'referer' => $filter_referer,
+];
+$pagination = cot_pagenav('admin', $urlParams, $d, $total_items, $limit);
+$tt->assign(cot_generatePaginationTags($pagination));
+
 
 $tt->parse('MAIN');
 $pluginBody = $tt->text('MAIN');
