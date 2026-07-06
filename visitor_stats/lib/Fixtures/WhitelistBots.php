@@ -25,6 +25,7 @@ class WhitelistBots
             'Feedly',                   // RSS reader
             'Google-InspectionTool',    // Google Search Console testing
             'Googlebot',                // Google search
+            'Googlebot-Image',          // сканирует и индексирует визуальный контент от фавикона и выше
             'GPTBot',                   // OpenAI
             'ia_archiver',              // Internet Archive
             'Lighthouse',               // PageSpeed Insights / Lighthouse
