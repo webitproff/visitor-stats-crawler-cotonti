@@ -2,6 +2,7 @@
 /**
  * Whitelist of allowed bots
  * File: plugins/visitor_stats/lib/Fixtures/WhitelistBots.php
+ * Instantly check if Google bots and AI crawlers can access your website https://crawlercheck.com/
  */
 class WhitelistBots
 {
