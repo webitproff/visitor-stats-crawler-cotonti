@@ -1,3 +1,4 @@
+<?php
 /**
  * Whitelist of allowed bots
  * File: plugins/visitor_stats/lib/Fixtures/WhitelistBots.php
