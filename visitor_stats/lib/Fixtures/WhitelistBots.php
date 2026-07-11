@@ -15,17 +15,34 @@ class WhitelistBots
             'Googlebot-Image',              // Google Images
             'Googlebot-News',               // Google News
             'Googlebot-Video',              // Google Video
-            'Google-InspectionTool',        // Search Console URL Inspection
+
+            /* Основные краулеры */
             'GoogleOther',                  // Новый универсальный crawler Google
             'GoogleOther-Image',            // Google Images (универсальный)
             'GoogleOther-Video',            // Google Video (универсальный)
+
+            /* Инструменты вебмастеров */
+            'Google-InspectionTool',        // Search Console URL Inspection
+            'Google-Site-Verification',     // Google Site Verification
+            'Google Page Speed Insights',   // PageSpeed Insights
+            'Google Web Preview',           // Предпросмотр ссылок
+            'Google-SearchByImage',         // Поиск по картинке
+            'Google-Prober',                // Проверка доступности
+
+            /* Реклама и партнёрские программы */
+            // 'AdsBot-Google',                // Google Ads
+            // 'Mediapartners-Google',         // Google AdSense
+
+            /* Другие сервисы Google */
             'Storebot-Google',              // Google Play Store
-            'Mediapartners-Google',         // Google AdSense
-            'AdsBot-Google',                // Google Ads
+            'GoogleProducer',               // Google Publisher Center
+            'Google-AMPHTML',               // AMP страницы
+            'Google-Read-Aloud',            // Функция "прочитать вслух"
+            'Google-CloudVertexBot',        // Google Cloud Vertex AI
+            'Google-Safety',                // Google Safety / Moderation
             'APIs-Google',                  // Google APIs
             'FeedFetcher-Google',           // Google RSS Feed Fetcher
-            'GoogleProducer',               // Google Publisher Center
-
+			
             /* ==========================================================
              * Microsoft
              * ======================================================== */
@@ -38,11 +55,13 @@ class WhitelistBots
              * Yahoo
              * ======================================================== */
             'Slurp',                        // Yahoo Search
+            'Yahoo! Slurp',                 // Yahoo Search (старый вариант)
 
             /* ==========================================================
              * Apple
              * ======================================================== */
             'Applebot',                     // Apple Search (Siri, Spotlight и др.)
+            'Applebot-Extended',            // Apple AI (Extended)
 
             /* ==========================================================
              * Yandex
@@ -58,6 +77,8 @@ class WhitelistBots
             'YandexFavicons',               // Yandex Favicons
             'YandexPagechecker',            // Yandex Page Checker
             'YandexWebmaster',              // Yandex Webmaster Tools
+            'YandexAdditional',             // Yandex Additional Services
+            'YandexDirect',                 // Yandex Direct
 
             /* ==========================================================
              * Chinese Search
@@ -87,6 +108,9 @@ class WhitelistBots
             'BLEXBot',                      // BLEXBot (SEO)
             'SiteAuditBot',                 // SiteAudit SEO
             'Screaming Frog SEO Spider',    // Screaming Frog SEO Spider
+            'ImagesiftBot',                 // ImageSift (image indexing)
+            'Omgilibot',                    // Omgili Bot (web monitoring)
+            'Webzio-Extended',              // Webz.io Extended Crawler
 
             /* ==========================================================
              * AI Crawlers
@@ -100,7 +124,6 @@ class WhitelistBots
             'cohere-ai',                    // Cohere AI
             'OAI-SearchBot',                // OpenAI Search
             'Amazonbot',                    // Amazon AI / Alexa
-            'Applebot-Extended',            // Apple AI (Extended)
             'ClaudeBot',                    // Anthropic Claude Bot
             'Meta-ExternalAgent',           // Meta AI (Facebook/Instagram)
             'Meta-ExternalFetcher',         // Meta External Fetcher
