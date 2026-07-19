@@ -160,34 +160,82 @@ function getDeviceModel($ua = null)
 }
 
 /**
- * ISP и VPN через ip-api.com (кэш в сессии)
+ * Получить информацию об ISP и VPN-статусе через ip-api.com (кэш в сессии)
+ * совместимо с PHP 8.5
+ * @return array|null ['isp' => string, 'is_vpn' => int] или null при ошибке
  */
-function getIspInfo()
+function getIspInfo(): ?array
 {
     $ip = getRealIp();
-    if (session_status() == PHP_SESSION_NONE) {
+    
+    // Инициализация сессии, если нужно
+    if (session_status() !== PHP_SESSION_ACTIVE) {
         session_start();
     }
+    
     $key = 'ipinfo_' . md5($ip);
-    if (!empty($_SESSION[$key]) && $_SESSION[$key]['exp'] > time()) {
+    
+    // Проверяем кэш
+    if (!empty($_SESSION[$key]) && is_array($_SESSION[$key]) && ($_SESSION[$key]['exp'] ?? 0) > time()) {
         return $_SESSION[$key]['data'];
     }
-
-    $ch = curl_init("http://ip-api.com/json/{$ip}?fields=isp,proxy,hosting");
-    curl_setopt_array($ch, [CURLOPT_RETURNTRANSFER => 1, CURLOPT_TIMEOUT => 3]);
-    $resp = curl_exec($ch);
-    curl_close($ch);
-    $data = json_decode($resp, true);
-
-    $result = null;
-    if (!empty($data['isp'])) {
+    
+    // Современный способ инициализации cURL (без deprecated функций)
+    $ch = curl_init();
+    if ($ch === false) {
+        error_log('Visitor Stats: Не удалось инициализировать cURL');
+        return null;
+    }
+    
+    // Формируем URL с нужными полями
+    $url = sprintf('http://ip-api.com/json/%s?fields=isp,proxy,hosting', $ip);
+    
+    curl_setopt_array($ch, [
+        CURLOPT_URL            => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 3,
+        CURLOPT_CONNECTTIMEOUT => 2,
+        CURLOPT_FAILONERROR    => false, // Не хотим, чтобы ошибки HTTP приводили к false без тела
+        CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1, // Современная версия протокола
+    ]);
+    
+    $response = curl_exec($ch);
+    
+    // Проверка ошибок cURL
+    if ($response === false) {
+        $error = curl_error($ch);
+        $errno = curl_errno($ch);
+        error_log("Visitor Stats: Ошибка cURL ({$errno}): {$error} для IP {$ip}");
+        // Объект cURL закроется автоматически при выходе, не вызываем curl_close()
+        return null;
+    }
+    
+    // Проверяем HTTP-статус
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    if ($httpCode !== 200) {
+        error_log("Visitor Stats: ip-api вернул HTTP-статус {$httpCode} для IP {$ip}");
+        return null;
+    }
+    
+    // Декодируем JSON строго с проверкой ошибок
+    $data = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+    
+    // Формируем результат только если есть ISP
+    if (empty($data['isp'])) {
+        $result = null;
+    } else {
         $result = [
-            'isp'    => $data['isp'],
-            'is_vpn' => ($data['proxy'] || $data['hosting']) ? 1 : 0
+            'isp'    => (string)$data['isp'],
+            'is_vpn' => (!empty($data['proxy']) || !empty($data['hosting'])) ? 1 : 0,
         ];
     }
-
-    $_SESSION[$key] = ['data' => $result, 'exp' => time() + 3600];
+    
+    // Сохраняем в сессию с временем жизни
+    $_SESSION[$key] = [
+        'data' => $result,
+        'exp'  => time() + 3600,
+    ];
+    
     return $result;
 }
 
