@@ -159,16 +159,28 @@ function getDeviceModel($ua = null)
     return '';
 }
 
+
 /**
- * Получить информацию об ISP и VPN-статусе через ip-api.com (кэш в сессии)
- * совместимо с PHP 8.5
- * @return array|null ['isp' => string, 'is_vpn' => int] или null при ошибке
+ * ISP и VPN через ip-api.com (кэш в сессии)
+ */
+// В начало файла (после объявления констант и require_once) добавьте глобальную переменную:
+$enableIspLookup = true; // true — включить получение ISP, false — отключить (возвращает null)
+
+/**
+ * ISP и VPN через ip-api.com (кэш в сессии)
+ * PHP 8.5+
+ * @return array|null Массив с ключами 'isp' и 'is_vpn' или null, если отключено или ошибка
  */
 function getIspInfo(): ?array
 {
+    global $enableIspLookup;
+    if (!$enableIspLookup) {
+        return null;
+    }
+
     $ip = getRealIp();
     
-    // Инициализация сессии, если нужно
+    // Инициализация сессии, если ещё не активна
     if (session_status() !== PHP_SESSION_ACTIVE) {
         session_start();
     }
@@ -179,15 +191,14 @@ function getIspInfo(): ?array
     if (!empty($_SESSION[$key]) && is_array($_SESSION[$key]) && ($_SESSION[$key]['exp'] ?? 0) > time()) {
         return $_SESSION[$key]['data'];
     }
-    
-    // Современный способ инициализации cURL (без deprecated функций)
+
+    // Современная инициализация cURL (без deprecated)
     $ch = curl_init();
     if ($ch === false) {
-        error_log('Visitor Stats: Не удалось инициализировать cURL');
+        error_log('ISP Lookup: Не удалось инициализировать cURL');
         return null;
     }
     
-    // Формируем URL с нужными полями
     $url = sprintf('http://ip-api.com/json/%s?fields=isp,proxy,hosting', $ip);
     
     curl_setopt_array($ch, [
@@ -195,8 +206,8 @@ function getIspInfo(): ?array
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_TIMEOUT        => 3,
         CURLOPT_CONNECTTIMEOUT => 2,
-        CURLOPT_FAILONERROR    => false, // Не хотим, чтобы ошибки HTTP приводили к false без тела
-        CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1, // Современная версия протокола
+        CURLOPT_FAILONERROR    => false, // чтобы при HTTP-ошибке всё равно получить тело ответа
+        CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
     ]);
     
     $response = curl_exec($ch);
@@ -205,28 +216,31 @@ function getIspInfo(): ?array
     if ($response === false) {
         $error = curl_error($ch);
         $errno = curl_errno($ch);
-        error_log("Visitor Stats: Ошибка cURL ({$errno}): {$error} для IP {$ip}");
-        // Объект cURL закроется автоматически при выходе, не вызываем curl_close()
+        error_log("ISP Lookup: Ошибка cURL ({$errno}): {$error} для IP {$ip}");
         return null;
     }
     
     // Проверяем HTTP-статус
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     if ($httpCode !== 200) {
-        error_log("Visitor Stats: ip-api вернул HTTP-статус {$httpCode} для IP {$ip}");
+        error_log("ISP Lookup: ip-api вернул HTTP-статус {$httpCode} для IP {$ip}");
         return null;
     }
     
-    // Декодируем JSON строго с проверкой ошибок
-    $data = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+    // Декодируем JSON с контролем ошибок
+    try {
+        $data = json_decode($response, true, 512, JSON_THROW_ON_ERROR);
+    } catch (\JsonException $e) {
+        error_log("ISP Lookup: Ошибка декодирования JSON: " . $e->getMessage());
+        return null;
+    }
     
-    // Формируем результат только если есть ISP
-    if (empty($data['isp'])) {
-        $result = null;
-    } else {
+    // Формируем результат
+    $result = null;
+    if (!empty($data['isp'])) {
         $result = [
             'isp'    => (string)$data['isp'],
-            'is_vpn' => (!empty($data['proxy']) || !empty($data['hosting'])) ? 1 : 0,
+            'is_vpn' => (!empty($data['proxy']) || !empty($data['hosting'])) ? 1 : 0
         ];
     }
     
